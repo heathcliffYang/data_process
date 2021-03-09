@@ -8,10 +8,10 @@ import cv2
 
 
 img_dir = '/home/ginny/Projects/dataset/masked_face_dataset/MAFA_TEST/images/'
-img_file_list = TraverseDir(img_dir, '.jpg', check_exist=True, skip='test')
+img_file_list = TraverseDir(img_dir, '.jpg', check_exist='txt', skip='test')
 
 for img_path in img_file_list:
-    label_path = PathHandler(img_path, 'find')
+    label_path = PathHandler(img_path, 'find_txt')
     img = cv2.imread(img_path)
     PlotLabelFile(img, label_path)
     result_path = PathHandler(label_path, 'plot')

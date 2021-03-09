@@ -4,9 +4,12 @@ import cv2
 image_extensions = ['.jpg', '.png', '.JPG', '.jpeg']
 label_extensions = ['.json', '.txt']
 img_dir_names = {'/images/', '/JPEGImages/'}
-label_dir_names = {'.json': '/labels/', '.txt': '/labelsJSON/'}
+label_dir_names = {'.txt': '/labels/', '.json': '/labelsJSON/'}
 
-def TraverseDir(dir, extension, check_exist, skip=None):
+def TraverseDir(dir, extension, check_exist=None, skip=None):
+    """
+    check_exist : json txt image, None
+    """
     # split skip types
     skip_dir = []
     skip_file_pattern = []
@@ -45,41 +48,51 @@ def TraverseDir(dir, extension, check_exist, skip=None):
             if skip_file_signal is True:
                 continue
             # Check corresponding files exist or not
-            if check_exist is True:
-                path = PathHandler(root+"/"+f, 'find')
-                if CheckFile(path):
-                    file_list.append(root+"/"+f)
-                else:
-                    continue
-                    print(f)
-            else:
+            if check_exist is None:
                 file_list.append(root+"/"+f)
+            else:
+                path = PathHandler(root+"/"+f, 'find'+'_'+check_exist)
+                if path is not None: # Check if they are an image-label pair
+                    file_list.append(root+"/"+f)
     print("Total available: %d files"%(len(file_list)))
     return file_list
+
 
 def PathHandler(path, task):
     extension = '.'+path.split('.')[-1]
     if task == 'plot': # plot result images
         path = path.replace(label_dir_names[extension], '/results/').replace(extension, '.jpg')
-    elif task == 'find':
-        if extension == '.json' or extension == '.txt':
-            # Given a label file and we need to find the image file
+    elif 'find' in task or 'create' in task:
+        if 'image' in task and extension == '.json' or extension == '.txt':
+            # label -> image
             img_path = None
-            for img_dir in img_dir_names:
+            for img_dir in img_dir_names: # find all possible image folder name
                 path_pre = path.replace(label_dir_names[extension], img_dir).split('.')[0]
-                for img_extension in img_extensions:
+                for img_extension in img_extensions: # find all image extensions
                     if CheckFile(path_pre + img_extension):
                         img_path = path_pre + img_extension
             return img_path
         else:
-            # Given an image file and we need to find the label file
-
-
+            # image -> label
+            label_path = None
+            for label_ext in label_extensions:# execute possible label file
+                if label_ext.replace('.','') not in task:
+                    continue
+                for img_dir in img_dir_names: # find all possible image folder name
+                    if img_dir not in path:
+                        continue
+                    path_pre = path.replace(img_dir, label_dir_names[label_ext]).split('.')[0]
+                    if 'create' in task:
+                        label_path = path_pre + label_ext
+                    elif CheckFile(path_pre + label_ext):
+                        label_path = path_pre + label_ext
+                        break
+            return label_path
     return path
+
 
 def CheckFile(path):
     if os.path.isfile(path) == False  or os.stat(path).st_size == 0:
-        print("False")
         return False
     else:
         # print("True")

@@ -11,7 +11,7 @@ def PlotBox(img, bbox):
                      tuple(text_coord), cv2.FONT_HERSHEY_SIMPLEX,\
                      w*0.1, (0, 255, 255), 1, cv2.LINE_AA)
     cv2.rectangle(img, (bbox['x1'], bbox['y1']),\
-                      (bbox['x2'], bbox['y2']), (0, 255, 255), 2)
+                       (bbox['x2'], bbox['y2']), (0, 255, 255), 2)
 
 
 def ReadYoloLabel(label_path, bbox_format):
@@ -55,5 +55,14 @@ def ReadYoloLabel(label_path, bbox_format):
         bbox_list.append(bbox)
     return bbox_list
 
-def WriteYoloLabel(bbox_list):
-    return NotImplemented
+
+def WriteYoloLabel(label_path, bbox_list):
+    f = open(label_path, 'w')
+    for bbox in bbox_list:
+        f.write('%d %f %f %f %f\n'%(bbox['label'],\
+                                  bbox['x_center'],\
+                                  bbox['y_center'],\
+                                  bbox['w_box'],\
+                                  bbox['h_box']))
+    f.close()
+    return True
