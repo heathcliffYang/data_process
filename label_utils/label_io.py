@@ -1,4 +1,5 @@
 import cv2
+import pandas as pd
 from .ops import LabelRatio2Coord, clipping_coordinate
 
 # cv2.putText(影像, 文字, 座標, 字型, 大小, 顏色, 線條寬度, 線條種類)
@@ -66,3 +67,12 @@ def WriteYoloLabel(label_path, bbox_list):
                                   bbox['h_box']))
     f.close()
     return True
+
+def ReadGTFile(gt_file_path, answer_column):
+    answer_dict = dict()
+    df = pd.read_csv(gt_file_path)
+    for i, lpnumber in df.iterrows():
+        if  isinstance(lpnumber[answer_column], str):
+            ans = lpnumber[answer_column].strip()
+            answer_dict[ans] = 0
+    return answer_dict

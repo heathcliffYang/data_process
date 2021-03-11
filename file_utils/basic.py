@@ -9,6 +9,8 @@ label_dir_names = {'.txt': '/labels/', '.json': '/labelsJSON/'}
 def TraverseDir(dir, extension, check_exist=None, skip=None):
     """
     check_exist : json txt image, None
+
+    TODO:: extension can be a list
     """
     # split skip types
     skip_dir = []
@@ -20,10 +22,10 @@ def TraverseDir(dir, extension, check_exist=None, skip=None):
             else:
                 skip_file_pattern.append(skip_string)
     elif isinstance(skip, str):
-        if '/' in skip_string:
-            skip_dir.append(skip_string)
+        if '/' in skip:
+            skip_dir.append(skip)
         else:
-            skip_file_pattern.append(skip_string)
+            skip_file_pattern.append(skip)
     # traverse dir
     file_list = []
     for root, dirs, files in os.walk(dir):
