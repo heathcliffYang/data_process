@@ -4,13 +4,14 @@ from .ops import LabelRatio2Coord, clipping_coordinate
 
 # cv2.putText(影像, 文字, 座標, 字型, 大小, 顏色, 線條寬度, 線條種類)
 
-def PlotBox(img, bbox):
+def PlotBox(img, bbox, info=None):
     h, w, _ = img.shape
     bbox = LabelRatio2Coord(img, bbox)
     text_coord = clipping_coordinate(img, [bbox['x1'] - w*0.01, bbox['y1'] - h*0.01])
-    cv2.putText(img, str(bbox['label']),\
-                     tuple(text_coord), cv2.FONT_HERSHEY_SIMPLEX,\
-                     w*0.1, (0, 255, 255), 1, cv2.LINE_AA)
+    if info is not None and 'label' in info:
+        cv2.putText(img, str(bbox['label']),\
+                         tuple(text_coord), cv2.FONT_HERSHEY_SIMPLEX,\
+                         w*0.1, (0, 255, 255), 1, cv2.LINE_AA)
     cv2.rectangle(img, (bbox['x1'], bbox['y1']),\
                        (bbox['x2'], bbox['y2']), (0, 255, 255), 2)
 

@@ -63,6 +63,10 @@ def TraverseDir(dir, extension, check_exist=None, skip=None):
 def PathHandler(path, task):
     extension = '.'+path.split('.')[-1]
     if task == 'plot': # plot result images
+        result_dir = '/'.join(path.replace(label_dir_names[extension], '/results/').split('/')[:-1])
+        if not os.path.isdir(result_dir):
+            print(result_dir)
+            os.makedirs(result_dir)
         path = path.replace(label_dir_names[extension], '/results/').replace(extension, '.jpg')
     elif 'find' in task or 'create' in task:
         if 'image' in task and extension == '.json' or extension == '.txt':
