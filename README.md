@@ -1,7 +1,16 @@
 # data_process
 
-## label file types
+## install
 
+```
+conda install -c conda-forge opencv
+
+```
+
+## Supported file types
+
+### labels
 .json and .txt (yolo style)
 
-## image file types
+
+## Use face landmark to paste glasses
