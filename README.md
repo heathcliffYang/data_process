@@ -5,6 +5,7 @@
 ```
 conda install -c conda-forge opencv
 
+sudo apt-get install libsqlite3-dev
 ```
 
 ## Supported file types

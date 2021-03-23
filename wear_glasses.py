@@ -13,6 +13,9 @@ import face_alignment
 import math
 import random
 import numpy as np
+import os
+
+from data_augmentation.face import *
 
 # def distance():
 
@@ -57,10 +60,11 @@ def fd_get_bboxes(file_path):
 
 
 if __name__ == "__main__":
+    # wear_glasses('')
     src_dir = "/home/ginny/Projects/dataset/FD_source/MAFA_TEST/simple"
     dst_dir = "/home/ginny/Projects/dataset/FD_source/MAFA_TEST/glasses/"
 
-    glasses_img = cv2.imread("./circle_glasses.png", cv2.IMREAD_UNCHANGED)
+    glasses_img = cv2.imread("./glasses_images/black_glasses.png", cv2.IMREAD_UNCHANGED)
     print(glasses_img.shape)
     # for i in range(glasses_img.shape[0]):
     #     for j in range(glasses_img.shape[1]):
@@ -86,25 +90,25 @@ if __name__ == "__main__":
             preds = fa.get_landmarks(img_crop)
             if preds is None:
                 continue
+            Landmarks_set = Landmarks(preds)
+
 
             # Vectors collected
-            h_vector = (preds[0][27 - 1][0] - preds[0][18 - 1][0], preds[0][27 - 1][1] - preds[0][18 - 1][1])
-            eyebrow_eye_vector = (preds[0][38 - 1][0] - preds[0][19 - 1][0], preds[0][38 - 1][1] - preds[0][19 - 1][1])
+            h_vector = Landmarks_set[18, 27]
+            eyebrow_eye_vector = Landmarks_set[19, 38]
+            v_vector = eyebrow_eye_vector.perpendicular(h_vector)
 
-            s = (h_vector[0]*eyebrow_eye_vector[0] + h_vector[1]*eyebrow_eye_vector[1])/(h_vector[0]**2+h_vector[1]**2)
-            v_vector = (eyebrow_eye_vector[0] - s * h_vector[0], eyebrow_eye_vector[1] - s * h_vector[1])
-
-            eyebrow_nose_vector = (preds[0][30 - 1][0] - preds[0][19 - 1][0], preds[0][30 - 1][1] - preds[0][19 - 1][1])
-            s = (h_vector[0]*eyebrow_nose_vector[0] + h_vector[1]*eyebrow_nose_vector[1])/(h_vector[0]**2+h_vector[1]**2)
-            l_vector = (eyebrow_nose_vector[0] - s * h_vector[0], eyebrow_nose_vector[1] - s * h_vector[1])
+            eyebrow_nose_vector = Landmarks_set[19, 30]
+            l_vector = eyebrow_nose_vector.perpendicular(h_vector)
 
             # 1. glasses height
             glasses_height_ratio = random.uniform(0, 0.23)
-            glasses_height = math.sqrt(l_vector[0]**2 + l_vector[1]**2)
+            glasses_height = l_vector.length()
+            print(glasses_height)
             glasses_height *= 1. + glasses_height_ratio
 
             # 2. glasses length
-            glasses_length = math.sqrt((preds[0][27 - 1][0] - preds[0][18 - 1][0])**2 + (preds[0][27 - 1][1] - preds[0][18 - 1][1])**2)
+            glasses_length = h_vector.length()
             glasses_length_ratio = random.uniform(0, 0.4)
             glasses_length *= 1. + glasses_length_ratio
 
@@ -131,7 +135,7 @@ if __name__ == "__main__":
             C[1, 2] = - int(glasses_height) / 2  # y translation (pixels)
 
             # 3. glasses rotation degree
-            rotate = math.atan((preds[0][27 - 1][1] - preds[0][18 - 1][1]) / (preds[0][27-1][0] - preds[0][18 - 1][0]))
+            rotate = math.atan(h_vector.y / h_vector.x)
             rotate = rotate / math.pi * 180 * (-1)
 
             rotate_matrix = cv2.getRotationMatrix2D((0, 0), rotate, scale = 1)
@@ -160,25 +164,23 @@ if __name__ == "__main__":
 
             # Glasses mid point
             glass_midpt = T @ R @ C @ np.array([[int(glasses_length/2)],[0],[1]])
-            s = glass_midpt[1] / v_vector[1]
-            glass_left_shift = glass_midpt[0] - s * v_vector[0]
+            s = float(glass_midpt[1] / v_vector.y)
+            glass_left_shift = glass_midpt[0] - s * v_vector.x
 
             # Nose mid point
-            nose_mid = np.array(preds[0][28 - 1])
+            nose_mid = Landmarks_set[28] # np.array(preds[0][28 - 1])
             glasses_position_ratio = random.uniform(0.8, 0.95)
-            nose_mid[0] -= glasses_position_ratio / 2 * l_vector[0]
-            nose_mid[0] -= s * v_vector[0]
-            nose_mid[1] -= glasses_position_ratio / 2 * l_vector[1]
-            nose_mid[1] -= s * v_vector[1]
-            img = cv2.circle(img, (int(box[0] + nose_mid[0]), int(box[1] + nose_mid[1])), 1, (255,0,255), -1)
+            print(type(glasses_position_ratio / 2 * l_vector))
+            nose_mid = nose_mid - (glasses_position_ratio / 2 * l_vector +  s * v_vector)
+            img = cv2.circle(img, (int(box[0] + nose_mid.x), int(box[1] + nose_mid.y)), 1, (255,0,255), -1)
             # Glasses paste point
-            top_left = [nose_mid[0] - glass_left_shift, nose_mid[1]]
+            top_left = [nose_mid.x - glass_left_shift, nose_mid.y]
             img = cv2.circle(img, (int(box[0] + top_left[0]), int(box[1] + top_left[1])), 1, (255,0,255), -1)
 
             # Paste glasses
             for i in range(int(box[1] + top_left[1]), int(box[1] + top_left[1])+glasses_img_h):
                 for j in range(int(box[0] + top_left[0]), int(box[0] + top_left[0])+glasses_img_w):
-                    if tmp_glasses[i-int(box[1] + top_left[1])][j - int(box[0] + top_left[0])][3] > 50:#120:
+                    if tmp_glasses[i-int(box[1] + top_left[1])][j - int(box[0] + top_left[0])][3] > 120:
                         for k in range(3):
                             img[i,j,k] = tmp_glasses[i-int(box[1] + top_left[1])][j - int(box[0] + top_left[0])][k]
                     else:
