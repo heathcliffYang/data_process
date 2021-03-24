@@ -132,7 +132,7 @@ class Landmarks(object):
                                    self.landmarks[to_idx-1][1] - self.landmarks[from_idx-1][1])
 
 
-def wear_glasses(image, labels):
+def wear_glasses(image, labels=None):
     """
     Randomly make faces wear glasses
 
@@ -158,6 +158,9 @@ def wear_glasses(image, labels):
     # Set face alignment model
     fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
 
+    if labels is None:
+        labels = [[0, 0, 0, image.shape[1]-1, image.shape[0]-1]]
+
     # For each face, get landmarks and compute appropriate glasses of random styles
     for label in labels:
         # crop the face
@@ -171,7 +174,7 @@ def wear_glasses(image, labels):
             continue
         # horizontal vector of the face (along with eyebrow direction)
         h_vector = (preds[0][27 - 1][0] - preds[0][18 - 1][0], preds[0][27 - 1][1] - preds[0][18 - 1][1])
-
+        
 
 
 

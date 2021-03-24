@@ -5,15 +5,22 @@ from .ops import LabelRatio2Coord, clipping_coordinate
 # cv2.putText(影像, 文字, 座標, 字型, 大小, 顏色, 線條寬度, 線條種類)
 
 def PlotBox(img, bbox, info=None):
+    # Color set
+    color_set = {'0': (0, 255, 255), # yellow
+                 '1': (255, 255, 0), # blue
+                 '2': (0, 255, 0)}   # green
     h, w, _ = img.shape
     bbox = LabelRatio2Coord(img, bbox)
+    if bbox is False:
+        return False
     text_coord = clipping_coordinate(img, [bbox['x1'] - w*0.01, bbox['y1'] - h*0.01])
     if info is not None and 'label' in info:
+        print('plot', text_coord, img.shape)
         cv2.putText(img, str(bbox['label']),\
                          tuple(text_coord), cv2.FONT_HERSHEY_SIMPLEX,\
-                         w*0.1, (0, 255, 255), 1, cv2.LINE_AA)
+                         w*0.002, (0, 255, 255), 2, cv2.LINE_AA)
     cv2.rectangle(img, (bbox['x1'], bbox['y1']),\
-                       (bbox['x2'], bbox['y2']), (0, 255, 255), 2)
+                       (bbox['x2'], bbox['y2']), color_set[str(bbox['label'])], 2)
 
 
 def ReadYoloLabel(label_path, bbox_format):
@@ -41,6 +48,10 @@ def ReadYoloLabel(label_path, bbox_format):
             x2 = x_center+w_box/2
             y1 = y_center-h_box/2
             y2 = y_center+h_box/2
+            bbox['x_center'] = x_center
+            bbox['y_center'] = y_center
+            bbox['w_box'] = w_box
+            bbox['h_box'] = h_box
             bbox['x1'] = x1
             bbox['x2'] = x2
             bbox['y1'] = y1
