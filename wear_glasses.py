@@ -129,6 +129,7 @@ if __name__ == "__main__":
             ## Resize glasses image
             tmp_glasses = cv2.resize(tmp_glasses, (int(glasses_length), int(glasses_height)))#, cv2.INTER_AREA)
 
+            # code ref: https://github.com/ultralytics/yolov5
             # Center
             C = np.eye(3)
             C[0, 2] = - int(glasses_length) / 2  # x translation (pixels)
