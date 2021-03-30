@@ -141,13 +141,19 @@ class FaceDA(object):
 
             # Vectors collected
             h_vector = Landmarks_set[18, 27]
+            # Check landmarks quality
+            if h_vector.x < 1:
+                continue
             eyebrow_eye_vector = Landmarks_set[19, 38]# TEMP:
             v_vector = eyebrow_eye_vector.perpendicular(h_vector)
             eyebrow_nose_vector = Landmarks_set[19, 30]
             l_vector = eyebrow_nose_vector.perpendicular(h_vector)
+            # Check landmarks quality
+            if l_vector.length() < 1 or h_vector.length() < 1:
+                continue
 
             # 1. glasses height
-            glasses_height_ratio = random.uniform(0, 0.15)
+            glasses_height_ratio = random.uniform(0, 0.12)
             glasses_height = l_vector.length()
             glasses_height *= 1. + glasses_height_ratio
             # 2. glasses length
@@ -212,8 +218,8 @@ class FaceDA(object):
             top_left = [nose_mid.x - glass_left_shift, nose_mid.y]
 
             # Paste glasses
-            for i in range(int(box[1] + top_left[1]), int(box[1] + top_left[1])+glasses_img_h):
-                for j in range(int(box[0] + top_left[0]), int(box[0] + top_left[0])+glasses_img_w):
+            for i in range(min(int(box[1] + top_left[1]), int(image.shape[0]-1)), min(int(box[1] + top_left[1])+glasses_img_h, int(image.shape[0]-1))):
+                for j in range(min(int(box[0] + top_left[0]), int(image.shape[1]-1)), min(int(box[0] + top_left[0])+glasses_img_w, int(image.shape[1]-1))):
                     if glasses_img[i-int(box[1] + top_left[1])][j - int(box[0] + top_left[0])][3] > self.glasses_collect[glasses_name]:
                         for k in range(3):
                             image[i,j,k] = glasses_img[i-int(box[1] + top_left[1])][j - int(box[0] + top_left[0])][k]
@@ -233,7 +239,7 @@ class FaceDA(object):
         color = random.uniform(0, 255)
         # Cut out the lower part of a given face
         mid = 112/2
-        covered_h = int(random.uniform(mid-3, mid+20))
+        covered_h = int(random.uniform(mid, mid+20))
         for i in range(covered_h, img.shape[0]):
             for j in range(img.shape[1]):
                 for k in range(3):

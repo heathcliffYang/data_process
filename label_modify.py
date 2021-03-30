@@ -28,10 +28,12 @@ from label_utils.label_io import WriteYoloLabel
 
 import cv2
 
-class_dir_idx = {'full': 0, 'masked': 1, 'covered': 2} #'mixing': 3}
+# class_dir_idx = {'full': 0, 'masked': 1, 'covered': 2} #'mixing': 3}
+
+class_dir_idx = {'masked': 1, 'covered': 2} #'mixing': 3}
 
 img_dir =  '/home/ginny/Projects/dataset/masked_face_dataset/val/online_dataset/MAFA_test_split_val/'
-img_file_list = TraverseDir(img_dir, '.jpg')
+img_file_list = TraverseDir(img_dir, '.jpg', skip=['mixing/', 'full/'])
 
 for img_path in img_file_list:
     # Get source label
