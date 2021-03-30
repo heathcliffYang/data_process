@@ -6,12 +6,14 @@ results/ : save plot images
 from .label_io import PlotBox, ReadYoloLabel
 from .ops import IsNormalizedBBox, CorrectBBox
 
+
 def PlotLabelFile(img, label_path):
     bbox_list = ReadYoloLabel(label_path, 'xyxy')
     for bbox in bbox_list:
         state = PlotBox(img, bbox, 'label')
         if state is False:
             return False
+
 
 def CheckLabelNorm(img, label_path):
     bbox_list = ReadYoloLabel(label_path, 'xyxy')
@@ -29,3 +31,9 @@ def CheckLabelNorm(img, label_path):
         return new_bbox_list
     else:
         return None
+
+def mAP():
+    """
+    Reference: https://github.com/rafaelpadilla/Object-Detection-Metrics
+    """
+    pass

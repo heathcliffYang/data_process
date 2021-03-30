@@ -1,6 +1,7 @@
 import cv2
 import pandas as pd
 from .ops import LabelRatio2Coord, clipping_coordinate
+from ...file_utils.basic import TraverseDir
 
 # cv2.putText(影像, 文字, 座標, 字型, 大小, 顏色, 線條寬度, 線條種類)
 
@@ -80,6 +81,7 @@ def WriteYoloLabel(label_path, bbox_list):
     f.close()
     return True
 
+
 def ReadGTFile(gt_file_path, answer_column):
     answer_dict = dict()
     df = pd.read_csv(gt_file_path)
@@ -88,3 +90,68 @@ def ReadGTFile(gt_file_path, answer_column):
             ans = lpnumber[answer_column].strip()
             answer_dict[ans] = 0
     return answer_dict
+
+
+def ReadBBoxPredictFile(file_path):
+    """
+    Args:
+        file path : str
+
+        File format:
+            image_name:<image_name.jpg>
+                         (percentage) (abs)
+            <class_name>,<confidence>,<x1>,<y1>,<x2>,<y2>
+            ...
+            end
+
+        example:
+        image_name:a.jpg
+        full,98%,19,30,37,50
+        ...
+        end
+
+    Returns:
+        imgs_bbox : dict
+
+        {img_name1: [bbox1, bbox2, ...],
+         img_name2: [bbox1, bbox2, ...],
+         ...
+        }
+    """
+    f = open(file_path, 'r')
+    imgs_bbox = {}
+    img_bbox = []
+    imgs_name = []
+    for l in f:
+        if 'image_name:' in l or 'end' in l:
+            if len(img_bbox) != 0:
+                img_bbox.sort(key = lambda x: x['conf'], reverse=True)
+                imgs_bbox['img_name'] = img_bbox.copy()
+                img_bbox = []
+            # record image name
+            img_name = l.split(':')[-1]
+            imgs_name.append(img_name)
+        else:
+            # Read bboxes!
+            l = l.split(',')
+            bbox = dict()
+            bbox['label'] = l[0]
+            bbox['conf'] = float(l[1].split('%')[0])
+            bbox['x1'] = int(l[2])
+            bbox['y1'] = int(l[3])
+            bbox['x2'] = int(l[4])
+            bbox['y2'] = int(l[5])
+
+            img_bbox.append(bbox)
+    return imgs_bbox
+
+
+def ReadBBoxYoloLabels(dir_path):
+    img_file_list = TraverseDir(img_dir, '.jpg', check_exist='txt')
+    imgs_bbox = {}
+    for img_path in img_file_list:
+        label_path = PathHandler(img_path, 'find_txt')
+        bboxes = ReadYoloLabel(label_path, 'xyxy')
+        bboxes = LabelRatio2Coord(img, bboxes)
+        imgs_bbox[label_path.split('/')[-1]] = bboxes
+    return imgs_bbox

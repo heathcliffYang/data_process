@@ -64,3 +64,40 @@ def clipping_box(bbox):
     bbox['y2'] = min(1.-0.0001, bbox['y2'])
     print("Clipping bbox after", bbox)
     return bbox
+
+
+def iou_compute(box_a, box_b):
+    # intersection area
+    x1 = max(box_a['x1'], box_b['x1'])
+    y1 = max(box_a['y1'], box_b['y1'])
+    x2 = min(box_a['x2'], box_b['x2'])
+    y2 = min(box_a['y2'], box_b['y2'])
+    w = max(x2 - x1, 0)
+    h = max(y2 - y1, 0)
+    i_area = w*h
+    # uion area
+    u_area = (box_a['x2'] - box_a['x1'])*(box_a['y2'] - box_a['y1'])\
+           + (box_b['x2'] - box_b['x1'])*(box_b['y2'] - box_b['y1']) - i_area
+    return float(i_area) / u_area
+
+
+def img_PR(bboxes_gt, bboxes_pre, iou_threshold):
+    """
+    Goal:
+        Returns info for mAP calculation (Precision recall curve)
+        Precision = TP / (TP + FP)
+        Recall = TP / (TP + FN)
+
+    Returns:
+
+
+    Notes:
+
+        For each prediction bbox, it finds what ground-truth bbox it belongs to in a descending order of confidence
+        If iou(pred_box, gt_box) > iou_threshold, this gt_box is assigned to this pred_box.
+        Then we check if the class is correct or not -> correct: TP
+                                                     -> incorrect: FP
+        The rest of prediction bboxes cannot find gt bboxes -> FP
+        The rest of gt bboxes haven't been assigned to any prediction bboxes -> FN
+    """
+    pass
