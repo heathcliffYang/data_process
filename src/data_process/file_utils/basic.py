@@ -6,7 +6,7 @@ label_extensions = ['.json', '.txt']
 img_dir_names = {'/images/', '/JPEGImages/'}
 label_dir_names = {'.txt': '/labels/', '.json': '/labelsJSON/'}
 
-def TraverseDir(dir, extension, check_exist=None, skip=None):
+def TraverseDir(dir, extension, check_exist=None, skip=None, debug=False):
     """
     check_exist : json txt image, None
 
@@ -29,6 +29,8 @@ def TraverseDir(dir, extension, check_exist=None, skip=None):
     # traverse dir
     file_list = []
     for root, dirs, files in os.walk(dir):
+        if debug is True:
+            print(root)
         skip_dir_signal = False
         # filter out some directories
         for skip_string in skip_dir:
@@ -39,8 +41,10 @@ def TraverseDir(dir, extension, check_exist=None, skip=None):
             continue
         # traverse files
         for f in files:
+            if debug is True:
+                print(f)
             if extension not in f:
-                break
+                continue
             # filter out some file names
             skip_file_signal = False
             for skip_string in skip_file_pattern:
@@ -99,6 +103,7 @@ def PathHandler(path, task):
 
 def CheckFile(path):
     if os.path.isfile(path) == False  or os.stat(path).st_size == 0:
+        print("Fail to find:", path)
         return False
     else:
         # print("True")

@@ -11,6 +11,8 @@ each frame image, we have ground-truth bounding box data frame n x [x1, y1, w, h
 import data_process
 from data_process.label_utils.label_io import ReadGTFile, ReadBBoxYoloLabels
 from data_process.file_utils.basic import TraverseDir
+from data_process.data_augmentation.face import fd_get_bboxes
+from data_process.label_utils.tools import mAP
 import argparse
 
 
@@ -88,13 +90,19 @@ if __name__ == "__main__":
                     print("    ", fail_ans)
             print("1: %d, 2: %d, common: %d"%(count_1, count_2, common))
     elif 'box' in args.testMode:
-        img_dir = '/home/ginny/Projects/dataset/masked_face_dataset/backup_labels/mix_val/JPEGImages/'
+        print("Evaluate bboxes iou")
+        img_dir = '/home/ginny/Projects/dataset/masked_face_dataset/backup_labels/TEST/JPEGImages'
         imgs_bbox_gt = ReadBBoxYoloLabels(img_dir)
 
-        img_file_list = TraverseDir(img_dir, '.jpg', check_exist='txt')
+        print(imgs_bbox_gt)
+
+        img_file_list = TraverseDir(img_dir, '.jpg', check_exist='txt')#, debug=True)
         imgs_bbox_pre = {}
         for img_path in img_file_list:
             img_bbox = fd_get_bboxes(img_path)
             imgs_bbox_pre[img_path] = img_bbox
-            print("image: %s\n  gt: "%(img_path), imgs_bbox_gt[img_path])
-            print("  pred: ", imgs_bbox_pre[img_path])
+            # print("image: %s\n  gt: "%(img_path), imgs_bbox_gt[img_path])
+            # print("  pred: ", imgs_bbox_pre[img_path])
+
+        score = mAP(imgs_bbox_gt, imgs_bbox_pre, 0.5)
+        print("mAP@0.5:", score)

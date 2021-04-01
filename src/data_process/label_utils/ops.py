@@ -114,7 +114,7 @@ def img_box_match(bboxes_gt, bboxes_pre, iou_threshold):
                     max_iou_index = i
                     max_iou = iou_temp
         if max_iou_index != -1: # successfully find a box_gt
-            gt_assign = 1
+            gt_assign[i] = 1
             # TP
             pre_TF.append([True, box_pre['conf']])
         else:

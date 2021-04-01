@@ -1,7 +1,7 @@
 import cv2
 import pandas as pd
 from .ops import LabelRatio2Coord, clipping_coordinate
-from data_process.file_utils.basic import TraverseDir
+from data_process.file_utils.basic import TraverseDir, PathHandler
 
 # cv2.putText(影像, 文字, 座標, 字型, 大小, 顏色, 線條寬度, 線條種類)
 
@@ -147,11 +147,16 @@ def ReadBBoxPredictFile(file_path):
 
 
 def ReadBBoxYoloLabels(dir_path):
-    img_file_list = TraverseDir(img_dir, '.jpg', check_exist='txt')
+    img_file_list = TraverseDir(dir_path, '.jpg', check_exist='txt')
     imgs_bbox = {}
     for img_path in img_file_list:
         label_path = PathHandler(img_path, 'find_txt')
+        img = cv2.imread(img_path)
         bboxes = ReadYoloLabel(label_path, 'xyxy')
-        bboxes = LabelRatio2Coord(img, bboxes)
-        imgs_bbox[label_path] = bboxes
+        abs_bbox_list = []
+        for bbox in bboxes:
+            bbox = LabelRatio2Coord(img, bbox)
+            abs_bbox_list.append(bbox)
+
+        imgs_bbox[img_path] = abs_bbox_list.copy()
     return imgs_bbox

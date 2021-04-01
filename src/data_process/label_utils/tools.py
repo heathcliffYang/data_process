@@ -4,7 +4,7 @@ labels/
 results/ : save plot images
 """
 from .label_io import PlotBox, ReadYoloLabel
-from .ops import IsNormalizedBBox, CorrectBBox
+from .ops import IsNormalizedBBox, CorrectBBox, img_box_match
 
 
 def PlotLabelFile(img, label_path):
@@ -61,11 +61,21 @@ def mAP(imgs_bbox_gt, imgs_bbox_pre, iou_threshold):
     for pre in total_pre_TF:
         if pre[0] == True:
             TP += 1
+            FN -= 1
         else:
             FP += 1
-        FN -= TP
-        precision = TP / (TP + FP)
-        recall = TP / (TP + FN)
+
+        if TP + FP != 0:
+            precision = TP / (TP + FP)
+        else:
+            precision = 0
+
+        if TP + FN != 0:
+            recall = TP / (TP + FN)
+        else:
+            recall = 0
+
+        print(TP, FP, FN, precision, recall)
         precision_list.append(precision)
         recall_list.append(recall)
     # area under precision x recall curve,
@@ -77,11 +87,21 @@ def mAP(imgs_bbox_gt, imgs_bbox_pre, iou_threshold):
     r_prev = recall_list[0]
     maximum_precision_collect = [0.] * 11
     for p, r in zip(precision_list, recall_list):
-        interpolate_bucket_idx = int(r * 10 + 0.5)
+        interpolate_bucket_idx = int(r * 10 + 0.5) - 1
+        # print(r, interpolate_bucket_idx)
         if p >= p_prev:
+            # print(p)
             maximum_precision_collect[interpolate_bucket_idx] = p
             p_prev = p
             r_prev = r
+    p = 0
+    for i in range(10, -1, -1):
+        # print(i, maximum_precision_collect[i])
+        if maximum_precision_collect[i] != 0.:
+            p = maximum_precision_collect[i]
+        else:
+            maximum_precision_collect[i] = p
+    # print(maximum_precision_collect)
     mAP = sum(maximum_precision_collect) / 11.
     return mAP
 
