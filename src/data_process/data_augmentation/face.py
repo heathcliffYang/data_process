@@ -277,6 +277,8 @@ def fd_get_bboxes(file_path):
         if i == -1:
             break
         bbox.append(i)
+    img_bbox = {}
+    conf = 1.
     for box in bboxes_list:
         x = box[0]
         y = box[1]
@@ -284,4 +286,12 @@ def fd_get_bboxes(file_path):
         h = box[3]
         box[2] = x + w - 1
         box[3] = y + h - 1
-    return bboxes_list
+        bbox = {}
+        bbox['x1'] = box[0]
+        bbox['y1'] = box[1]
+        bbox['x2'] = box[2]
+        bbox['y2'] = box[3]
+        bbox['conf'] = conf
+        img_bbox.append(bbox)
+        conf -= 0.001
+    return img_bbox

@@ -81,7 +81,7 @@ def iou_compute(box_a, box_b):
     return float(i_area) / u_area
 
 
-def img_PR(bboxes_gt, bboxes_pre, iou_threshold):
+def img_box_match(bboxes_gt, bboxes_pre, iou_threshold):
     """
     Goal:
         Returns info for mAP calculation (Precision recall curve)
@@ -89,10 +89,10 @@ def img_PR(bboxes_gt, bboxes_pre, iou_threshold):
         Recall = TP / (TP + FN)
 
     Returns:
-
+        list of [TP/FP, conf]
+        num_gt_bboxes : int
 
     Notes:
-
         For each prediction bbox, it finds what ground-truth bbox it belongs to in a descending order of confidence
         If iou(pred_box, gt_box) > iou_threshold, this gt_box is assigned to this pred_box.
         Then we check if the class is correct or not -> correct: TP
@@ -100,4 +100,24 @@ def img_PR(bboxes_gt, bboxes_pre, iou_threshold):
         The rest of prediction bboxes cannot find gt bboxes -> FP
         The rest of gt bboxes haven't been assigned to any prediction bboxes -> FN
     """
-    pass
+    num_gt_bboxes = len(bboxes_gt)
+    gt_assign = [0] * num_gt_bboxes
+    pre_TF = []
+    for box_pre in bboxes_pre:
+        max_iou = 0
+        max_iou_index = -1
+        for i in range(num_gt_bboxes):
+            iou_temp = iou_compute(box_pre, bboxes_gt[i])
+            if gt_assign[i] == 0: # This gt bbox hasn't been assigned
+                # Find the box_gt with largest iou with this given box_pre
+                if iou_temp > iou_threshold and iou_temp > max_iou:
+                    max_iou_index = i
+                    max_iou = iou_temp
+        if max_iou_index != -1: # successfully find a box_gt
+            gt_assign = 1
+            # TP
+            pre_TF.append([True, box_pre['conf']])
+        else:
+            # FP
+            pre_TF.append([False, box_pre['conf']])
+    return pre_TF, num_gt_bboxes

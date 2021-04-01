@@ -1,3 +1,6 @@
 *.pyc
 *.json
 evaluation_commands.sh
+dist/
+build
+src/data_process_hc.egg-info
