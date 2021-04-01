@@ -11,7 +11,8 @@ def PlotBox(img, bbox, info=None):
                  '1': (255, 255, 0), # blue
                  '2': (0, 255, 0)}   # green
     h, w, _ = img.shape
-    bbox = LabelRatio2Coord(img, bbox)
+    if 'x1' in bbox and bbox['x1'] < 1:
+        bbox = LabelRatio2Coord(img, bbox)
     if bbox is False:
         return False
     text_coord = clipping_coordinate(img, [bbox['x1'] - w*0.01, bbox['y1'] - h*0.01])
@@ -20,8 +21,11 @@ def PlotBox(img, bbox, info=None):
         cv2.putText(img, str(bbox['label']),\
                          tuple(text_coord), cv2.FONT_HERSHEY_SIMPLEX,\
                          w*0.002, (0, 255, 255), 2, cv2.LINE_AA)
-    cv2.rectangle(img, (bbox['x1'], bbox['y1']),\
-                       (bbox['x2'], bbox['y2']), color_set[str(bbox['label'])], 2)
+        cv2.rectangle(img, (bbox['x1'], bbox['y1']),\
+                           (bbox['x2'], bbox['y2']), color_set[str(bbox['label'])], 2)
+    else:
+        cv2.rectangle(img, (bbox['x1'], bbox['y1']),\
+                           (bbox['x2'], bbox['y2']), color_set['0'], 2)
 
 
 def ReadYoloLabel(label_path, bbox_format):

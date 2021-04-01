@@ -10,9 +10,9 @@ We assume that images and labels are pair and organize in this format:
 
 The label plotted images will be stored in <path to target dir>/results/
 """
-from file_utils.basic import *
-from label_utils.tools import *
-from label_utils.label_io import WriteYoloLabel
+from data_process.file_utils.basic import *
+from data_process.label_utils.tools import *
+from data_process.label_utils.label_io import WriteYoloLabel
 import argparse
 import cv2
 

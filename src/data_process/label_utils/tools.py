@@ -75,7 +75,7 @@ def mAP(imgs_bbox_gt, imgs_bbox_pre, iou_threshold):
         else:
             recall = 0
 
-        print(TP, FP, FN, precision, recall)
+        # print(TP, FP, FN, precision, recall)
         precision_list.append(precision)
         recall_list.append(recall)
     # area under precision x recall curve,
@@ -103,6 +103,7 @@ def mAP(imgs_bbox_gt, imgs_bbox_pre, iou_threshold):
             maximum_precision_collect[i] = p
     # print(maximum_precision_collect)
     mAP = sum(maximum_precision_collect) / 11.
+    print("mAP@%.2f: %.2f, TP: %d, FP: %d, FN: %d, recall: %.2f"%(iou_threshold, mAP, TP, FP, FN, TP / (TP + FN)))
     return mAP
 
 
