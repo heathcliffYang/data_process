@@ -29,6 +29,22 @@ def CorrectBBox(bbox):
     bbox = LabelFormatTrans(bbox)
     return bbox
 
+
+def LabelCoordinateTransform(labels, old_wh, new_wh):
+    """
+    Now this function is used to transform landmarks
+    Args:
+        list of landmarks: [[x1, y1], [x2, y2], ......]
+    """
+    new_labels = []
+    for label in labels[0]:
+        label_temp = []
+        label_temp.append(min(max(0, label[0] / old_wh[0] * new_wh[0]), new_wh[0]-1))
+        label_temp.append(min(max(0, label[1] / old_wh[1] * new_wh[1]), new_wh[1]-1))
+        new_labels.append(label_temp.copy())
+    return [new_labels]
+
+
 def LabelFormatTrans(bbox):
     if 'x1' in bbox:
         print("xyxy to xywh")

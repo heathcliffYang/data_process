@@ -9,90 +9,9 @@ import math
 import random
 import numpy as np
 import os
+from .landmarks import *
+from data_process.label_utils.ops import LabelCoordinateTransform
 
-
-class landmark_vector(object):
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-
-    def length(self):
-        return math.sqrt(self.x**2 + self.y**2)
-
-    def __sub__(self, other):
-        return landmark_vector(self.x - other.x, self.y - other.y)
-
-    def __add__(self, other):
-        return landmark_vector(self.x + other.x, self.y + other.y)
-
-    def __mul__(self, scalar):
-        """
-        Only for mulitply by a scalar, NOT dot product
-        """
-        if isinstance(scalar, landmark_vector):
-            raise BaseException("This is not dot product")
-        else:
-            return landmark_vector(scalar*self.x, scalar*self.y)
-
-    def __rmul__(self, scalar):
-        """
-        Only for mulitply by a scalar, NOT dot product
-        """
-        if isinstance(scalar, landmark_vector):
-            raise BaseException("This is not dot product")
-        else:
-            return landmark_vector(scalar*self.x, scalar*self.y)
-
-    def __str__(self):
-        return "(%.2f, %.2f)"%(self.x, self.y)
-
-    def perpendicular(self, horizontal):
-        """
-        Returns:
-            a projection vector of self vector on the direction perpendicular to the horizontal vector
-        """
-        scalar = (self.x*horizontal.x + self.y*horizontal.y)/(horizontal.x**2+horizontal.y**2)
-        return self - horizontal * scalar
-
-
-class landmark(object):
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-
-    def __sub__(self, other):
-        if isinstance(other, landmark_vector):
-            return landmark(self.x - other.x, self.y - other.y)
-        else:
-            raise BaseException("Illegal operation")
-
-
-class Landmarks(object):
-    def __init__(self, landmarks):
-        """
-        landmarks from face_alignment"
-            [pt index][2]
-                       -> [x, y]
-
-            Warning:
-                pt index in the landmark figure counts from 1; however, pt index in a list counts from 0
-        """
-        if landmarks is not None:
-            self.landmarks = landmarks[0]
-        else:
-            raise BaseException("No landmarks are created")
-
-    def __getitem__(self, idx_pair):
-        """
-        Returns:
-            landmark vector from 1st node to 2nd node specified in idx_pair
-        """
-        if isinstance(idx_pair, int):
-            return landmark(self.landmarks[idx_pair-1][0], self.landmarks[idx_pair-1][1])
-        else:
-            from_idx, to_idx = idx_pair
-            return landmark_vector(self.landmarks[to_idx-1][0] - self.landmarks[from_idx-1][0],\
-                                   self.landmarks[to_idx-1][1] - self.landmarks[from_idx-1][1])
 
 class FaceDA(object):
 
@@ -104,6 +23,69 @@ class FaceDA(object):
                            # decide alpha threshold for copying glasses area
         self.glasses_collect = {'circle_glasses.png': 50,\
                            'black_glasses.png': 100}
+
+    def getLandmarks(self, image, labels=None):
+        """
+        Return landmarks
+
+        Args:
+            image
+            labels : [n x 5] ,
+
+        Returns:
+            labels_with_landmarks: [n x (5 + 68*2)]
+        """
+        if labels is None:
+            labels = [[0, 0, 0, image.shape[1]-1, image.shape[0]-1]]
+
+        new_labels = np.zeros((labels.shape[0], 5 + 68 * 2))
+        new_labels[:,:5] = labels
+        count = -1
+        # print("%d faces in this image labeled"%(labels.shape[0]))
+        # For each face, get landmarks and compute appropriate glasses of random styles
+        for label in labels:
+            # crop the face
+            count += 1
+            box = label[1:].copy()
+            box = [int(b) for b in box]
+            # print("face box:", box, image.shape)
+            box_w = box[2] - box[0]
+            box_h = box[3] - box[1]
+            img_crop = image[box[1]:box[1]+box_h, box[0]:box[0]+box_w, :]
+            img_crop_scaled = cv2.resize(img_crop, (112,112))
+            # cv2.imwrite("./img_val_face.jpg", img_crop)
+            # get landmarks of the face
+            preds = self.fa.get_landmarks(img_crop_scaled)
+            if preds is None:
+                print("No landmarks can be found!")
+                continue
+            preds = LabelCoordinateTransform(preds, (112,112), (img_crop.shape[1], img_crop.shape[0]))
+            Landmarks_set = Landmarks(preds)
+
+            # Check landmarks quality
+            h_vector = Landmarks_set[18, 27]
+            if h_vector.x < 1:
+                continue
+            eyebrow_eye_vector = Landmarks_set[19, 38]# TEMP:
+            v_vector = eyebrow_eye_vector.perpendicular(h_vector)
+            eyebrow_nose_vector = Landmarks_set[19, 30]
+            l_vector = eyebrow_nose_vector.perpendicular(h_vector)
+            # Check landmarks quality
+            if l_vector.length() < 1 or h_vector.length() < 1:
+                continue
+
+            for i in range(68):
+                one_pt = Landmarks_set[i+1]
+                new_labels[count][5 + i*2] = int(box[0] + one_pt.x)
+                new_labels[count][5 + i*2 + 1] = int(box[1] + one_pt.y)
+                # image = cv2.circle(image, (int(box[0] + one_pt.x), int(box[1] + one_pt.y)), 1, (255,0,255), -1)
+
+            # cv2.imwrite("./img_val.jpg", image)
+        # print(labels[10000000])
+        # for l in new_labels:
+        #     print("label length:", l.shape)
+        return new_labels
+
 
     def wearGlasses(self, image, labels=None):
         """
@@ -225,7 +207,6 @@ class FaceDA(object):
                             image[i,j,k] = glasses_img[i-int(box[1] + top_left[1])][j - int(box[0] + top_left[0])][k]
         return image
 
-
     def CutLowerPartFace(self, img):
         """
         Args:
@@ -246,6 +227,7 @@ class FaceDA(object):
                     img[i,j,k] = color # OR randomly pick color at this place ?!
 
         return img
+
 
 
 
