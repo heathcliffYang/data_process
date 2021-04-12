@@ -24,12 +24,13 @@ class FaceDA(object):
         self.glasses_collect = {'circle_glasses.png': 50,\
                            'black_glasses.png': 100}
 
-    def getLandmarks(self, image, labels=None):
+    def getLandmarks(self, image, labels=None, node_num=5):
         """
         Return landmarks
 
         Args:
             image
+            node_num : landmarks = 68 or only 5
             labels : [n x 5] ,
 
         Returns:
@@ -38,7 +39,7 @@ class FaceDA(object):
         if labels is None:
             labels = [[0, 0, 0, image.shape[1]-1, image.shape[0]-1]]
 
-        new_labels = np.zeros((labels.shape[0], 5 + 68 * 2))
+        new_labels = np.zeros((labels.shape[0], 5 + node_num * 2))
         new_labels[:,:5] = labels
         count = -1
         # print("%d faces in this image labeled"%(labels.shape[0]))
@@ -52,7 +53,11 @@ class FaceDA(object):
             box_w = box[2] - box[0]
             box_h = box[3] - box[1]
             img_crop = image[box[1]:box[1]+box_h, box[0]:box[0]+box_w, :]
-            img_crop_scaled = cv2.resize(img_crop, (112,112))
+            try:
+                img_crop_scaled = cv2.resize(img_crop, (112,112))
+            except:
+                print("Fail to crop and resize the face", box)
+                continue
             # cv2.imwrite("./img_val_face.jpg", img_crop)
             # get landmarks of the face
             preds = self.fa.get_landmarks(img_crop_scaled)
@@ -74,12 +79,38 @@ class FaceDA(object):
             if l_vector.length() < 1 or h_vector.length() < 1:
                 continue
 
-            for i in range(68):
-                one_pt = Landmarks_set[i+1]
-                new_labels[count][5 + i*2] = int(box[0] + one_pt.x)
-                new_labels[count][5 + i*2 + 1] = int(box[1] + one_pt.y)
+            if node_num == 68:
+                for i in range(68):
+                    one_pt = Landmarks_set[i+1]
+                    new_labels[count][5 + i*2] = int(box[0] + one_pt.x)
+                    new_labels[count][5 + i*2 + 1] = int(box[1] + one_pt.y)
                 # image = cv2.circle(image, (int(box[0] + one_pt.x), int(box[1] + one_pt.y)), 1, (255,0,255), -1)
-
+            else: # node_num = 5
+                # left eye
+                x = (Landmarks_set[37].x + Landmarks_set[40].x) / 2
+                y = (Landmarks_set[37].y + Landmarks_set[40].y) / 2
+                new_labels[count][5 + 0] = int(box[0] + x)
+                new_labels[count][5 + 1] = int(box[1] + y)
+                # right eye
+                x = (Landmarks_set[43].x + Landmarks_set[46].x) / 2
+                y = (Landmarks_set[43].y + Landmarks_set[46].y) / 2
+                new_labels[count][5 + 2] = int(box[0] + x)
+                new_labels[count][5 + 3] = int(box[1] + y)
+                # nose
+                x = Landmarks_set[31].x
+                y = Landmarks_set[31].y
+                new_labels[count][5 + 4] = int(box[0] + x)
+                new_labels[count][5 + 5] = int(box[1] + y)
+                # mouth left end
+                x = Landmarks_set[49].x
+                y = Landmarks_set[49].y
+                new_labels[count][5 + 6] = int(box[0] + x)
+                new_labels[count][5 + 7] = int(box[1] + y)
+                # mouth right end
+                x = Landmarks_set[55].x
+                y = Landmarks_set[55].y
+                new_labels[count][5 + 8] = int(box[0] + x)
+                new_labels[count][5 + 9] = int(box[1] + y)
             # cv2.imwrite("./img_val.jpg", image)
         # print(labels[10000000])
         # for l in new_labels:
