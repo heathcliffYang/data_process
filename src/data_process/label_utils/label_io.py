@@ -86,6 +86,10 @@ def WriteYoloLabel(label_path, bbox_list):
     return True
 
 
+def WriteYoloLabelListFile(label_file_list):
+    pass
+    
+
 def ReadGTFile(gt_file_path, answer_column):
     answer_dict = dict()
     df = pd.read_csv(gt_file_path)

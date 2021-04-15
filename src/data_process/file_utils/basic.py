@@ -43,7 +43,11 @@ def TraverseDir(dir, extension, check_exist=None, skip=None, debug=False):
         for f in files:
             if debug is True:
                 print(f)
-            if extension not in f:
+            if isinstance(extension, list):
+                for ext in extension:
+                    if ext not in f:
+                        continue
+            elif extension not in f:
                 continue
             # filter out some file names
             skip_file_signal = False
