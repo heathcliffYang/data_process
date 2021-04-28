@@ -77,12 +77,12 @@ def PathHandler(path, task):
             os.makedirs(result_dir)
         path = path.replace(label_dir_names[extension], '/results/').replace(extension, '.jpg')
     elif 'find' in task or 'create' in task:
-        if 'image' in task and extension == '.json' or extension == '.txt':
+        if 'image' in task and (extension == '.json' or extension == '.txt'):
             # label -> image
             img_path = None
             for img_dir in img_dir_names: # find all possible image folder name
                 path_pre = path.replace(label_dir_names[extension], img_dir).split('.')[0]
-                for img_extension in img_extensions: # find all image extensions
+                for img_extension in image_extensions: # find all image extensions
                     if CheckFile(path_pre + img_extension):
                         img_path = path_pre + img_extension
             return img_path
@@ -95,11 +95,15 @@ def PathHandler(path, task):
                 for img_dir in img_dir_names: # find all possible image folder name
                     if img_dir not in path:
                         continue
-                    path_pre = path.replace(img_dir, label_dir_names[label_ext]).split('.')[0]
+                    label_dir = '/'.join(path.replace(img_dir, label_dir_names[label_ext]).split('/')[:-1])
+                    file_name = path.split('/')[-1].split('.')[0]
                     if 'create' in task:
-                        label_path = path_pre + label_ext
-                    elif CheckFile(path_pre + label_ext):
-                        label_path = path_pre + label_ext
+                        if not os.path.isdir(label_dir):
+                            print("create : ", label_dir)
+                            os.makedirs(label_dir)
+                        label_path = label_dir + '/' + file_name + label_ext
+                    elif CheckFile(label_dir + '/' + file_name + label_ext):
+                        label_path = label_dir + '/' + file_name + label_ext
                         break
             return label_path
     return path

@@ -11,13 +11,23 @@ import numpy as np
 import os
 from .landmarks import *
 from data_process.label_utils.ops import LabelCoordinateTransform
+from data_process.label_utils.label_io import ReadLandmarkFile
 
 
 class FaceDA(object):
 
-    def __init__(self):
-        # Set face alignment model
-        self.fa = fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
+    def __init__(self, landmark_source='file'):
+        """
+        landmark_source has 2 types:
+            1. 'file'
+            2. 'model'
+        According to self.landmark_source, we decide to set up self.fa or not
+        """
+        self.landmark_source = landmark_source
+        self.fa = None
+        if self.landmark_source == 'model':
+            # Set face alignment model
+            self.fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
         # Set glasses styles
         self.working_dir = '/'.join(os.path.realpath(__file__).split('/')[:-1])
                            # decide alpha threshold for copying glasses area
@@ -36,6 +46,9 @@ class FaceDA(object):
         Returns:
             labels_with_landmarks: [n x (5 + 68*2)]
         """
+        if self.fa is None:
+            raise Exception("self.fa hasn't been set so we can't get landmarks.")
+
         if labels is None:
             labels = [[0, 0, 0, image.shape[1]-1, image.shape[0]-1]]
 
@@ -118,7 +131,7 @@ class FaceDA(object):
         return new_labels
 
 
-    def wearGlasses(self, image, labels=None):
+    def wearGlasses(self, image, labels=None, landmark_path=None):
         """
         Randomly make faces wear glasses
 
@@ -145,8 +158,14 @@ class FaceDA(object):
             box_w = box[2] - box[0]
             box_h = box[3] - box[1]
             img_crop = image[box[1]:box[1]+box_h, box[0]:box[0]+box_w, :]
-            # get landmarks of the face
-            preds = self.fa.get_landmarks(img_crop)
+            if self.landmark_source == 'model':
+                # get landmarks of the face
+                preds = self.fa.get_landmarks(img_crop)
+            elif self.landmark_source == 'file':
+                preds = ReadLandmarkFile(landmark_path, img_crop.shape[1], img_crop.shape[0])
+            else:
+                preds = None
+
             if preds is None:
                 print("No landmarks can be found!")
                 continue

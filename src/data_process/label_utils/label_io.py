@@ -88,7 +88,7 @@ def WriteYoloLabel(label_path, bbox_list):
 
 def WriteYoloLabelListFile(label_file_list):
     pass
-    
+
 
 def ReadGTFile(gt_file_path, answer_column):
     answer_dict = dict()
@@ -168,3 +168,26 @@ def ReadBBoxYoloLabels(dir_path):
 
         imgs_bbox[img_path] = abs_bbox_list.copy()
     return imgs_bbox
+
+
+def ReadLandmarkFile(file_path, w, h):
+    f = open(file_path, 'r')
+    preds = []
+    for line in f:
+        l = line.split(',')
+        x = float(l[0]) * w
+        y = float(l[1]) * h
+        preds.append((x, y))
+    if len(preds) > 0:
+        return [preds]
+    return None
+
+
+def WriteLandmarkFile(Landmarks, file_path, w, h):
+    f = open(file_path, 'w')
+    for i in range(1, 68+1):
+        landmark = Landmarks[i]
+        x_ratio = max(min(landmark.x/w, 1.), 0.)
+        y_ratio = max(min(landmark.y/h, 1.), 0.)
+        # print(x_ratio, y_ratio)
+        f.write(str(x_ratio)+","+str(y_ratio)+"\n")

@@ -38,12 +38,20 @@ if __name__ == "__main__":
         hits = 0
         fails = 0
         fail_list = []
+        wa = 0
+        wa_list = []
+
         for f in prediction_list:
             # extract prediction
             pred = f.split('_')[-1].replace('.jpg', '').replace('-','')
             if pred in answer_dict:
                 answer_dict[pred] += 1
                 hits += 1
+            elif pred != '':
+                wa += 1
+                wa_list.append(pred)
+                # img = cv2.imread(f)
+                # cv2.imwrite('./results/'+f.split('/')[-1], img)
             # else:
                 # print(pred)
         print("\nItems fail to detect:")
@@ -59,6 +67,8 @@ if __name__ == "__main__":
         print("Fails / Total ans: %d / %d = %.3f, Accuracy: %.3f"%\
                (fails, len(answer_dict), float(fails)/len(answer_dict),\
                 1. - float(fails)/len(answer_dict)))
+        print("WA: %d"%(wa))
+        print(wa_list)
 
         if args.compareDir is not None:
             answer_dict = ReadGTFile(gt_file_path, gt_column)
@@ -67,6 +77,8 @@ if __name__ == "__main__":
             count_1 = 0
             count_2 = 0
             common = 0
+            wa_2 = 0
+            wa_list_2 = []
             for f in prediction_list_2:
                 # extract prediction
                 pred = f.split('_')[-1].replace('.jpg', '').replace('-','')
