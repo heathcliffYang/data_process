@@ -33,6 +33,7 @@ if __name__ == "__main__":
         print(img_path, "\n", label_path, "\n")
         preds = fa.get_landmarks(img)
         if preds == None:
+            WriteLandmarkFile(None, label_path, img.shape[1], img.shape[0])
             continue
         landmarks = Landmarks(preds)
 
