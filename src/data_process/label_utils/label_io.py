@@ -185,9 +185,13 @@ def ReadLandmarkFile(file_path, w, h):
 
 def WriteLandmarkFile(Landmarks, file_path, w, h):
     f = open(file_path, 'w')
+    if Landmarks == None:
+        f.close()
+        return
     for i in range(1, 68+1):
         landmark = Landmarks[i]
         x_ratio = max(min(landmark.x/w, 1.), 0.)
         y_ratio = max(min(landmark.y/h, 1.), 0.)
         # print(x_ratio, y_ratio)
         f.write(str(x_ratio)+","+str(y_ratio)+"\n")
+    f.close()
