@@ -15,7 +15,12 @@ from data_process.label_utils.label_io import ReadLandmarkFile
 
 
 class FaceDA(object):
-
+    """
+    Face-oriented data augmentation techniques class
+        1. wearGlasses
+        2. CutLowerPartFace
+        3. grayPatch: gray-rectangle patch
+    """
     def __init__(self, landmark_source='file'):
         """
         landmark_source has 2 types:
@@ -262,22 +267,42 @@ class FaceDA(object):
         Args:
             img: aligned face image
 
-        randomly
+        height: int(112/2)+20
         """
         if img.shape[0] != 112:
             img = cv2.resize(img, (112,112))
 
         color = random.uniform(0, 255)
         # Cut out the lower part of a given face
-        mid = 112/2
+        mid = int(112/2)
         covered_h = int(random.uniform(mid, mid+20))
+        img = img[:mid+20, :, :]
         for i in range(covered_h, img.shape[0]):
             for j in range(img.shape[1]):
                 for k in range(3):
                     img[i,j,k] = color # OR randomly pick color at this place ?!
-
+        cv2.imwrite('test_face.jpg', img)
         return img
 
+    def grayPatch(self, img):
+        """
+        img : BGR
+
+        minimal patch size = 10, 10
+
+        RGB to gray according to https://docs.opencv.org/3.4/de/d25/imgproc_color_conversions.html
+        """
+        left = random.randint(0, 112-1-10)
+        top = random.randint(0, int(112/2)-1-10)
+        h = random.randint(10, 90)
+        w = random.randint(10, 70)
+
+        for i in range(left, min(left+w, img.shape[1])):
+            for j in range(top, min(top+h, img.shape[0])):
+                Y = 0.114*img[j][i][0] + 0.587 * img[j][i][1] + 0.299 * img[j][i][2]
+                img[j][i][:] = Y
+        cv2.imwrite('gray_test_face.jpg', img)
+        return img
 
 
 
