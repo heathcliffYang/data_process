@@ -102,15 +102,20 @@ def PathHandler(path, task):
                             print("create : ", label_dir)
                             os.makedirs(label_dir)
                         label_path = label_dir + '/' + file_name + label_ext
-                    elif CheckFile(label_dir + '/' + file_name + label_ext):
+                    elif CheckFile(label_dir + '/' + file_name + label_ext, True):
                         label_path = label_dir + '/' + file_name + label_ext
                         break
             return label_path
     return path
 
 
-def CheckFile(path):
-    if os.path.isfile(path) == False  or os.stat(path).st_size == 0:
+def CheckFile(path, ignore_empty=False):
+    if ignore_empty == True:
+        if os.path.isfile(path) == False:
+            return False
+        else:
+            return True
+    if os.path.isfile(path) == False or os.stat(path).st_size == 0:
         print("Fail to find:", path)
         return False
     else:
