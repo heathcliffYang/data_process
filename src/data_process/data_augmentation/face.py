@@ -154,7 +154,6 @@ class FaceDA(object):
         Returns:
             image
         """
-        start = time.time()
         if labels is None:
             labels = [[0, 0, 0, image.shape[1]-1, image.shape[0]-1]]
 
@@ -200,25 +199,15 @@ class FaceDA(object):
             glasses_length_ratio = random.uniform(0, 0.4)
             glasses_length *= 1. + glasses_length_ratio
 
-            start_1 = time.time()
             # Get glasses
             glasses_name = random.choice(list(self.glasses_collect.keys()))
             glasses_img = cv2.imread(self.working_dir+"/../glasses_images/"+glasses_name, cv2.IMREAD_UNCHANGED)
-            glasses_color = [random.randint(0, 255),random.randint(0, 255),random.randint(0, 255)]
+            glasses_color = np.array([random.randint(0, 255),random.randint(0, 255),random.randint(0, 255)]).reshape(1,1,3)
             # Before rotate
-            for i in range(glasses_img.shape[0]):
-                for j in range(glasses_img.shape[1]):
-                    if glasses_img[i][j][3] == 0:
-                        for k in range(3):
-                            glasses_img[i][j][k] = 255
-                    else:
-                        for k in range(3):
-                            glasses_img[i][j][k] = glasses_color[k]
+            glasses_img[:,:,:3] = glasses_color
             # Resize glasses image and blur
             glasses_img = cv2.resize(glasses_img, (int(glasses_length), int(glasses_height)))
             glasses_img = cv2.GaussianBlur(glasses_img, (3,3), 0)
-            end_1 = time.time()
-            print("Change glasses color:", end_1-start_1)
 
             # Compute warp matrix, code ref: https://github.com/ultralytics/yolov5
             ## Center
@@ -260,16 +249,11 @@ class FaceDA(object):
             top_left = [nose_mid.x - glass_left_shift, nose_mid.y]
 
             # Paste glasses
-            start_1 = time.time()
-            for i in range(min(int(box[1] + top_left[1]), int(image.shape[0]-1)), min(int(box[1] + top_left[1])+glasses_img_h, int(image.shape[0]-1))):
-                for j in range(min(int(box[0] + top_left[0]), int(image.shape[1]-1)), min(int(box[0] + top_left[0])+glasses_img_w, int(image.shape[1]-1))):
-                    if glasses_img[i-int(box[1] + top_left[1])][j - int(box[0] + top_left[0])][3] > self.glasses_collect[glasses_name]:
-                        for k in range(3):
-                            image[i,j,k] = glasses_img[i-int(box[1] + top_left[1])][j - int(box[0] + top_left[0])][k]
-            end_1 = time.time()
-            print("Paste glasses color:", end_1-start_1)
-        end = time.time()
-        print("Wear glasses:", end-start)
+            top_bound = min(int(box[1] + top_left[1]), int(image.shape[0]-1))
+            bottom_bound = min(int(box[1] + top_left[1])+glasses_img_h, int(image.shape[0]-1))
+            left_bound = min(int(box[0] + top_left[0]), int(image.shape[1]-1))
+            right_bound = min(int(box[0] + top_left[0])+glasses_img_w, int(image.shape[1]-1))
+            image[top_bound:bottom_bound, left_bound:right_bound,:][glasses_img[:,:,3] > self.glasses_collect[glasses_name]] = glasses_img[glasses_img[:,:,3] > self.glasses_collect[glasses_name]][:,:3]
         return image
 
     def CutLowerPartFace(self, img):
@@ -294,7 +278,7 @@ class FaceDA(object):
                     img[i,j,k] = color # OR randomly pick color at this place ?!
         end = time.time()
         print("CutLowerPartFace:", end-start)
-        # cv2.imwrite('test_face.jpg', img)
+        cv2.imwrite('test_face.jpg', img)
         return img
 
     def grayPatch(self, img):
@@ -316,7 +300,7 @@ class FaceDA(object):
                 img[j][i][:] = Y
         end = time.time()
         print("grayPatch:", end-start)
-        # cv2.imwrite('gray_test_face.jpg', img)
+        cv2.imwrite('gray_test_face.jpg', img)
         return img
 
 
