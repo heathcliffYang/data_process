@@ -281,7 +281,7 @@ class FaceDA(object):
             for j in range(img.shape[1]):
                 for k in range(3):
                     img[i,j,k] = color # OR randomly pick color at this place ?!
-        cv2.imwrite('test_face.jpg', img)
+        # cv2.imwrite('test_face.jpg', img)
         return img
 
     def grayPatch(self, img):
@@ -301,7 +301,7 @@ class FaceDA(object):
             for j in range(top, min(top+h, img.shape[0])):
                 Y = 0.114*img[j][i][0] + 0.587 * img[j][i][1] + 0.299 * img[j][i][2]
                 img[j][i][:] = Y
-        cv2.imwrite('gray_test_face.jpg', img)
+        # cv2.imwrite('gray_test_face.jpg', img)
         return img
 
 
