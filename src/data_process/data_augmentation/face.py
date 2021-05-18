@@ -249,11 +249,15 @@ class FaceDA(object):
             top_left = [nose_mid.x - glass_left_shift, nose_mid.y]
 
             # Paste glasses
-            top_bound = min(int(box[1] + top_left[1]), int(image.shape[0]-1))
+            top_bound = max(0, min(int(box[1] + top_left[1]), int(image.shape[0]-1)))
             bottom_bound = min(int(box[1] + top_left[1])+glasses_img_h, int(image.shape[0]-1))
-            left_bound = min(int(box[0] + top_left[0]), int(image.shape[1]-1))
+            left_bound = max(0, min(int(box[0] + top_left[0]), int(image.shape[1]-1)))
             right_bound = min(int(box[0] + top_left[0])+glasses_img_w, int(image.shape[1]-1))
-            image[top_bound:bottom_bound, left_bound:right_bound,:][glasses_img[:,:,3] > self.glasses_collect[glasses_name]] = glasses_img[glasses_img[:,:,3] > self.glasses_collect[glasses_name]][:,:3]
+            #print(top_bound, bottom_bound, left_bound, right_bound, glasses_img.shape)
+            target_shape = image[top_bound:bottom_bound, left_bound:right_bound,:][glasses_img[:bottom_bound-top_bound,:right_bound-left_bound,3] > self.glasses_collect[glasses_name]].shape
+            #print(target_shape)
+            #print(glasses_img[glasses_img[:,:,3] > self.glasses_collect[glasses_name]][:,:3].shape)
+            image[top_bound:bottom_bound, left_bound:right_bound,:][glasses_img[:bottom_bound-top_bound,:right_bound-left_bound,3] > self.glasses_collect[glasses_name]] = glasses_img[glasses_img[:,:,3] > self.glasses_collect[glasses_name]][:target_shape[0],:3]
         return image
 
     def CutLowerPartFace(self, img):
@@ -271,14 +275,15 @@ class FaceDA(object):
         mid = int(112/2)
         covered_h = int(random.uniform(mid, mid+20))
         img = img[:mid+20, :, :]
-        start = time.time()
-        for i in range(covered_h, img.shape[0]):
-            for j in range(img.shape[1]):
-                for k in range(3):
-                    img[i,j,k] = color # OR randomly pick color at this place ?!
-        end = time.time()
-        print("CutLowerPartFace:", end-start)
-        cv2.imwrite('test_face.jpg', img)
+        #start = time.time()
+        img[covered_h:img.shape[0], :, :3] = color
+        #for i in range(covered_h, img.shape[0]):
+        #    for j in range(img.shape[1]):
+        #        for k in range(3):
+        #            img[i,j,k] = color # OR randomly pick color at this place ?!
+        #end = time.time()
+        #print("CutLowerPartFace:", end-start)
+        #cv2.imwrite('test_face.jpg', img)
         return img
 
     def grayPatch(self, img):
@@ -293,14 +298,18 @@ class FaceDA(object):
         top = random.randint(0, int(112/2)-1-10)
         h = random.randint(10, 90)
         w = random.randint(10, 70)
-        start = time.time()
-        for i in range(left, min(left+w, img.shape[1])):
-            for j in range(top, min(top+h, img.shape[0])):
-                Y = 0.114*img[j][i][0] + 0.587 * img[j][i][1] + 0.299 * img[j][i][2]
-                img[j][i][:] = Y
-        end = time.time()
-        print("grayPatch:", end-start)
-        cv2.imwrite('gray_test_face.jpg', img)
+        #start = time.time()
+        img[left:min(left+w, img.shape[1]), top:min(top+h, img.shape[0]), :] = \
+              np.tile((0.114 * img[left:min(left+w, img.shape[1]), top:min(top+h, img.shape[0]), 0] \
+                     + 0.587 * img[left:min(left+w, img.shape[1]), top:min(top+h, img.shape[0]), 1] \
+                     + 0.299 * img[left:min(left+w, img.shape[1]), top:min(top+h, img.shape[0]), 2])[:,:,None], (1,1,3))
+        #for i in range(left, min(left+w, img.shape[1])):
+        #    for j in range(top, min(top+h, img.shape[0])):
+        #        Y = 0.114*img[j][i][0] + 0.587 * img[j][i][1] + 0.299 * img[j][i][2]
+        #        img[j][i][:] = Y
+        #end = time.time()
+        #print("grayPatch:", end-start)
+        #cv2.imwrite('gray_test_face.jpg', img)
         return img
 
 
