@@ -262,6 +262,10 @@ class FaceDA(object):
 
     def CutLowerPartFace(self, img):
         """
+        Cut eye and eyebrow area :
+            top-left corner : 14, 33
+            box : 83 (w), 32 (h)
+
         Args:
             img: aligned face image
 
@@ -270,13 +274,13 @@ class FaceDA(object):
         if img.shape[0] != 112:
             img = cv2.resize(img, (112,112))
 
-        color = random.uniform(0, 255)
+        #color = random.uniform(0, 255)
         # Cut out the lower part of a given face
-        mid = int(112/2)
-        covered_h = int(random.uniform(mid, mid+20))
-        img = img[:mid+20, :, :]
+        #mid = int(112/2)
+        #covered_h = int(random.uniform(mid, mid+20))
+        img = img[33:65, 14:97, :]
         #start = time.time()
-        img[covered_h:img.shape[0], :, :3] = color
+        #img[covered_h:img.shape[0], :, :3] = color
         #for i in range(covered_h, img.shape[0]):
         #    for j in range(img.shape[1]):
         #        for k in range(3):
