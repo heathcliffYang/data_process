@@ -317,10 +317,11 @@ class FaceDA(object):
         return img
 
     # Code ref: https://github.com/ultralytics/yolov5/blob/master/utils/datasets.py
-    def augment_hsv(img, hgain=0.5, sgain=0.5, vgain=0.5):
+    def augment_hsv(self, img, hgain=0.5, sgain=0.5, vgain=0.5):
         r = np.random.uniform(-1, 1, 3) * [hgain, sgain, vgain] + 1  # random gains
         hue, sat, val = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
         dtype = img.dtype  # uint8
+       
 
         x = np.arange(0, 256, dtype=r.dtype)
         lut_hue = ((x * r[0]) % 180).astype(dtype)
