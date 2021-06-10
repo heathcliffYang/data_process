@@ -7,6 +7,7 @@ from data_process.data_augmentation.landmarks import *
 import argparse
 import face_alignment
 import os
+import shutil
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -16,7 +17,9 @@ if __name__ == "__main__":
     src_img_dir = args.sourceImgDir
 
     for fn in os.listdir(src_img_dir):
-        if not os.path.isdir(os.path.join(src_img_dir, fn)):
-            continue
-        os.rename(os.path.join(src_img_dir, fn),
-            os.path.join(src_img_dir, 'white_' + fn))
+        if len(os.listdir(os.path.join(src_img_dir, fn))) < 3:
+            shutil.rmtree(os.path.join(src_img_dir, fn))
+        # if not os.path.isdir(os.path.join(src_img_dir, fn)):
+        #     continue
+        # os.rename(os.path.join(src_img_dir, fn),
+        #     os.path.join(src_img_dir, 'white_' + fn))
