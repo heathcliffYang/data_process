@@ -16,6 +16,7 @@ from data_process.label_utils.label_io import WriteLandmarkFile, ReadLandmarkFil
 from data_process.data_augmentation.landmarks import *
 import argparse
 import face_alignment
+import os
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -28,9 +29,14 @@ if __name__ == "__main__":
     fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
 
     for img_path in src_img_file_list:
+        if not os.path.isfile(img_path):
+            continue
         img = cv2.imread(img_path)
         label_path =PathHandler(img_path, 'create_txt')
         print(img_path, "\n", label_path, "\n")
+        if img.shape[0] < 100 or img.shape[1] < 100:
+            os.remove(img_path)
+            continue
         preds = fa.get_landmarks(img)
         if preds == None:
             WriteLandmarkFile(None, label_path, img.shape[1], img.shape[0])
