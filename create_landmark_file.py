@@ -20,11 +20,20 @@ import face_alignment
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("sourceImgDir", type=str)
+    parser.add_argument("changeName", type=int, default=0, narg='?')
     args = parser.parse_args()
 
     src_img_dir = args.sourceImgDir
-    src_img_file_list = TraverseDir(src_img_dir, ['.jpg'], skip='.txt')
 
+    if args.changeName != 0:
+        for fn in os.listdir(src_img_dir):
+            if not os.path.isdir(os.path.join(src_img_dir, fn)):
+                continue
+            os.rename(os.path.join(src_img_dir, fn),
+                os.path.join(src_img_dir, 'white_' + fn))
+        return True
+
+    src_img_file_list = TraverseDir(src_img_dir, ['.jpg'], skip='.txt')
     fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
 
     for img_path in src_img_file_list:
